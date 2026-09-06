@@ -39,11 +39,22 @@ async function bootstrap() {
   // 2. Strict CORS
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, server-to-server) in dev
-      if (!origin || allowedOrigins.includes(origin) || nodeEnv === 'development') {
+      // Allow requests with no origin (mobile apps, curl, server-to-server) or in dev mode
+      if (!origin || nodeEnv === 'development') {
+        return callback(null, true);
+      }
+
+      const isAllowed =
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        allowedOrigins.some((allowed) => origin.startsWith(allowed.trim().replace(/\/$/, '')));
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(new Error('Bloqueado por política CORS'));
+        logger.warn(`Solicitud bloqueada por CORS desde origen: ${origin}`);
+        callback(new Error(`Bloqueado por política CORS: origen ${origin} no permitido`));
       }
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
