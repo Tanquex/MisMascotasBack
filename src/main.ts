@@ -100,7 +100,7 @@ async function bootstrap() {
   // 6. Graceful Shutdown
   app.enableShutdownHooks();
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   logger.log(`Servidor iniciado exitosamente en puerto: ${port} [Entorno: ${nodeEnv}]`);
 }
 
