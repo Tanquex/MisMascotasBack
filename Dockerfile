@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Install dependencies first (leverage Docker cache)
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copy source code and build
 COPY tsconfig*.json nest-cli.json ./
@@ -24,7 +24,7 @@ ENV PORT=3000
 
 # Install only production dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
