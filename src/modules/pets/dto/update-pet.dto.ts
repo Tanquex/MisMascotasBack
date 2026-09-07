@@ -72,4 +72,9 @@ export class UpdatePetDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'ID de la familia o grupo al que pertenece la mascota (o null para desvincular)' })
+  @IsOptional()
+  groupId?: string | null;
 }
+

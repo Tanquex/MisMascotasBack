@@ -75,6 +75,14 @@ export class Pet {
   @OneToMany('PetMoment', 'pet')
   moments: any[];
 
+  @Index()
+  @Column({ nullable: true })
+  groupId?: string;
+
+  @ManyToOne('PetGroup', 'pets', { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'groupId' })
+  group?: any;
+
   @CreateDateColumn()
   createdAt: Date;
 

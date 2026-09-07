@@ -80,4 +80,9 @@ export class CreatePetDto {
   @IsOptional()
   @IsUUID()
   ownerId?: string;
+
+  @ApiPropertyOptional({ description: 'ID de la familia o grupo al que pertenece la mascota' })
+  @IsOptional()
+  @IsUUID()
+  groupId?: string;
 }

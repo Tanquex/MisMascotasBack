@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { Pet } from './entities/pet.entity';
 import { PetMoment } from './entities/pet-moment.entity';
+import { GroupMember } from '../groups/entities/group-member.entity';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { CreateMomentDto } from './dto/create-moment.dto';
@@ -24,6 +25,8 @@ export class PetsService {
     private readonly petRepository: Repository<Pet>,
     @InjectRepository(PetMoment)
     private readonly momentRepository: Repository<PetMoment>,
+    @InjectRepository(GroupMember)
+    private readonly memberRepository: Repository<GroupMember>,
     private readonly storageService: SupabaseStorageService,
   ) {}
 
@@ -72,11 +75,25 @@ export class PetsService {
     const qb = this.petRepository
       .createQueryBuilder('pet')
       .leftJoinAndSelect('pet.owner', 'owner')
+      .leftJoinAndSelect('pet.group', 'group')
       .orderBy('pet.createdAt', 'DESC');
 
-    // Data isolation: Pet owners only see their own pets
+    // Data isolation: Pet owners see their own pets AND pets belonging to their family groups
     if (currentUser.role === Role.PET_OWNER) {
-      qb.where('pet.ownerId = :ownerId', { ownerId: currentUser.id });
+      const memberships = await this.memberRepository.find({
+        where: { userId: currentUser.id },
+        select: { groupId: true },
+      });
+      const groupIds = memberships.map((m) => m.groupId);
+
+      if (groupIds.length > 0) {
+        qb.where('(pet.ownerId = :ownerId OR pet.groupId IN (:...groupIds))', {
+          ownerId: currentUser.id,
+          groupIds,
+        });
+      } else {
+        qb.where('pet.ownerId = :ownerId', { ownerId: currentUser.id });
+      }
     }
 
     if (species) {
@@ -96,19 +113,29 @@ export class PetsService {
   async findOne(id: string, currentUser: User): Promise<Pet> {
     const pet = await this.petRepository.findOne({
       where: { id },
-      relations: { owner: true, medicalRecords: true },
+      relations: { owner: true, medicalRecords: true, group: true },
     });
 
     if (!pet) {
       throw new NotFoundException(`Mascota con ID ${id} no encontrada`);
     }
 
-    // Authorization check
+    // Authorization check: Owner, Admin, Vet, or Member of the pet's family group
     if (
       currentUser.role === Role.PET_OWNER &&
       pet.ownerId !== currentUser.id
     ) {
-      throw new ForbiddenException('No tienes acceso a esta mascota');
+      let isFamilyMember = false;
+      if (pet.groupId) {
+        const membership = await this.memberRepository.findOne({
+          where: { groupId: pet.groupId, userId: currentUser.id },
+        });
+        if (membership) isFamilyMember = true;
+      }
+
+      if (!isFamilyMember) {
+        throw new ForbiddenException('No tienes acceso a esta mascota');
+      }
     }
 
     return pet;
@@ -173,8 +200,17 @@ export class PetsService {
   ): Promise<PetMoment> {
     const pet = await this.findOne(petId, currentUser);
 
-    // Permisos: Solo el dueño o un ADMIN pueden agregar momentos a la mascota
-    if (currentUser.role !== Role.ADMIN && pet.ownerId !== currentUser.id) {
+    // Permisos: Dueño, ADMIN, o miembro de la familia de la mascota
+    const isOwner = pet.ownerId === currentUser.id;
+    let isFamilyMember = false;
+    if (pet.groupId) {
+      const membership = await this.memberRepository.findOne({
+        where: { groupId: pet.groupId, userId: currentUser.id },
+      });
+      if (membership) isFamilyMember = true;
+    }
+
+    if (currentUser.role !== Role.ADMIN && !isOwner && !isFamilyMember) {
       throw new ForbiddenException('No tienes permiso para agregar recuerdos a esta mascota');
     }
 

@@ -24,7 +24,10 @@ import { Pet } from './modules/pets/entities/pet.entity';
 import { MedicalRecord } from './modules/medical-records/entities/medical-record.entity';
 import { AuditLog } from './modules/audit-log/entities/audit-log.entity';
 import { PetMoment } from './modules/pets/entities/pet-moment.entity';
+import { PetGroup } from './modules/groups/entities/pet-group.entity';
+import { GroupMember } from './modules/groups/entities/group-member.entity';
 import { StorageModule } from './modules/storage/storage.module';
+import { GroupsModule } from './modules/groups/groups.module';
 
 @Module({
   imports: [
@@ -61,7 +64,7 @@ import { StorageModule } from './modules/storage/storage.module';
 
         const baseOptions = {
           type: 'postgres' as const,
-          entities: [User, Pet, MedicalRecord, AuditLog, PetMoment],
+          entities: [User, Pet, MedicalRecord, AuditLog, PetMoment, PetGroup, GroupMember],
           synchronize: dbConfig.synchronize,
           logging: dbConfig.logging,
           ssl: sslOptions,
@@ -93,6 +96,7 @@ import { StorageModule } from './modules/storage/storage.module';
     PetsModule,
     MedicalRecordsModule,
     StorageModule,
+    GroupsModule,
   ],
   providers: [
     // Global Exception Filter to prevent internal server error leakage
