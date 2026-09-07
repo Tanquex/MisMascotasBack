@@ -2,37 +2,74 @@ import { Injectable, Logger, BadRequestException, InternalServerErrorException }
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+const DEFAULT_SUPABASE_URL = 'https://ggzfljxummcyljrwfyeb.supabase.co';
+const DEFAULT_SUPABASE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnemZsanh1bW1jeWxqcndmeWViIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODY1MzEyNiwiZXhwIjoyMTA0MjI5MTI2fQ.c6vug0jGct62Hl8J4TlZnXf8F3CxK3bSdEjsZ2BQ-HA';
+
 @Injectable()
 export class SupabaseStorageService {
   private readonly logger = new Logger(SupabaseStorageService.name);
   private supabase: SupabaseClient | null = null;
   private isConfigured = false;
+  private initErrorReason: string | null = null;
 
   constructor(private readonly configService: ConfigService) {
     this.initSupabase();
   }
 
-  private initSupabase() {
-    let supabaseUrl =
-      process.env.SUPABASE_URL ||
-      process.env.Project_URL ||
-      this.configService.get<string>('SUPABASE_URL') ||
-      this.configService.get<string>('Project_URL');
+  private resolveEnv(keys: string[]): string | undefined {
+    // 1. Direct match
+    for (const key of keys) {
+      const val = process.env[key] || this.configService?.get<string>(key);
+      if (val && val.trim() !== '') return val.trim();
+    }
+    // 2. Case-insensitive match across process.env
+    const lowerKeys = keys.map((k) => k.toLowerCase());
+    for (const [envKey, envVal] of Object.entries(process.env)) {
+      if (envVal && lowerKeys.includes(envKey.toLowerCase())) {
+        return envVal.trim();
+      }
+    }
+    return undefined;
+  }
 
-    const supabaseKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.SUPABASE_KEY ||
-      process.env.Project_API_keys ||
-      this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') ||
-      this.configService.get<string>('Project_API_keys');
+  private initSupabase(): boolean {
+    if (this.isConfigured && this.supabase) {
+      return true;
+    }
 
-    if (!supabaseUrl || !supabaseKey) {
-      this.logger.warn('⚠️ Supabase Storage no está configurado (Faltan SUPABASE_URL o API Key)');
-      return;
+    let supabaseUrl = this.resolveEnv([
+      'SUPABASE_URL',
+      'Project_URL',
+      'PROJECT_URL',
+      'project_url',
+      'SUPABASE_PROJECT_URL',
+    ]);
+
+    let supabaseKey = this.resolveEnv([
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'SUPABASE_KEY',
+      'SUPABASE_SERVICE_KEY',
+      'Project_API_keys',
+      'PROJECT_API_KEYS',
+      'PROJECT_API_KEY',
+      'project_api_keys',
+      'SUPABASE_API_KEY',
+    ]);
+
+    // Fallbacks si Render no tiene las variables en su entorno
+    if (!supabaseUrl) {
+      this.logger.warn('⚠️ SUPABASE_URL no detectada en variables de entorno. Aplicando fallback de proyecto.');
+      supabaseUrl = DEFAULT_SUPABASE_URL;
+    }
+
+    if (!supabaseKey) {
+      this.logger.warn('⚠️ SUPABASE_KEY no detectada en variables de entorno. Aplicando fallback de proyecto.');
+      supabaseKey = DEFAULT_SUPABASE_KEY;
     }
 
     // Normalizar URL: quitar /rest/v1/ o barras finales si existen
-    supabaseUrl = supabaseUrl.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+    supabaseUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 
     try {
       this.supabase = createClient(supabaseUrl, supabaseKey, {
@@ -42,9 +79,13 @@ export class SupabaseStorageService {
         },
       });
       this.isConfigured = true;
+      this.initErrorReason = null;
       this.logger.log(`✅ Supabase Storage inicializado correctamente para URL: ${supabaseUrl}`);
+      return true;
     } catch (err: any) {
+      this.initErrorReason = err.message;
       this.logger.error(`Error inicializando cliente Supabase: ${err.message}`);
+      return false;
     }
   }
 
@@ -58,8 +99,12 @@ export class SupabaseStorageService {
     contentType: string,
   ): Promise<{ publicUrl: string; storagePath: string }> {
     if (!this.isConfigured || !this.supabase) {
+      this.initSupabase();
+    }
+
+    if (!this.isConfigured || !this.supabase) {
       throw new InternalServerErrorException(
-        'El servicio de almacenamiento en la nube (Supabase Storage) no está configurado correctamente.',
+        `El servicio de almacenamiento en la nube (Supabase Storage) no pudo iniciarse: ${this.initErrorReason || 'Faltan credenciales'}`,
       );
     }
 
