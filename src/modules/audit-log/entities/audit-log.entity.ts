@@ -19,16 +19,16 @@ export class AuditLog {
   @Column({ length: 60 })
   action: string; // e.g. LOGIN_SUCCESS, LOGIN_FAILED, PET_CREATED, USER_UPDATED
 
-  @Column({ length: 60 })
-  resource: string; // e.g. Auth, Pets, Users
+  @Column({ length: 255 })
+  resource: string; // e.g. Auth, Pets, Users, or endpoint route
 
   @Column({ nullable: true })
   resourceId?: string;
 
-  @Column({ length: 45, nullable: true })
+  @Column({ length: 255, nullable: true })
   ipAddress?: string;
 
-  @Column({ nullable: true, length: 255 })
+  @Column({ type: 'text', nullable: true })
   userAgent?: string;
 
   @Column({ type: 'text', nullable: true })

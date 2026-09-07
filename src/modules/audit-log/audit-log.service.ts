@@ -40,7 +40,12 @@ export class AuditLogService {
           : params.details;
 
       const log = this.auditRepository.create({
-        ...params,
+        userId: params.userId,
+        action: params.action ? params.action.substring(0, 60) : 'UNKNOWN',
+        resource: params.resource ? params.resource.substring(0, 255) : '',
+        resourceId: params.resourceId,
+        ipAddress: params.ipAddress ? params.ipAddress.substring(0, 255) : undefined,
+        userAgent: params.userAgent,
         details: detailsStr,
       });
 
