@@ -72,6 +72,9 @@ export class Pet {
   @OneToMany(() => MedicalRecord, (record) => record.pet)
   medicalRecords: MedicalRecord[];
 
+  @OneToMany('PetMoment', 'pet')
+  moments: any[];
+
   @CreateDateColumn()
   createdAt: Date;
 

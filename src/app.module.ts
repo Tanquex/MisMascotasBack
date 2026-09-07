@@ -23,6 +23,8 @@ import { User } from './modules/users/entities/user.entity';
 import { Pet } from './modules/pets/entities/pet.entity';
 import { MedicalRecord } from './modules/medical-records/entities/medical-record.entity';
 import { AuditLog } from './modules/audit-log/entities/audit-log.entity';
+import { PetMoment } from './modules/pets/entities/pet-moment.entity';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
   imports: [
@@ -59,7 +61,7 @@ import { AuditLog } from './modules/audit-log/entities/audit-log.entity';
 
         const baseOptions = {
           type: 'postgres' as const,
-          entities: [User, Pet, MedicalRecord, AuditLog],
+          entities: [User, Pet, MedicalRecord, AuditLog, PetMoment],
           synchronize: dbConfig.synchronize,
           logging: dbConfig.logging,
           ssl: sslOptions,
@@ -90,6 +92,7 @@ import { AuditLog } from './modules/audit-log/entities/audit-log.entity';
     AuthModule,
     PetsModule,
     MedicalRecordsModule,
+    StorageModule,
   ],
   providers: [
     // Global Exception Filter to prevent internal server error leakage
