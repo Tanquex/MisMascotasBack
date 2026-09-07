@@ -71,11 +71,28 @@ export class SupabaseStorageService {
     // Normalizar URL: quitar /rest/v1/ o barras finales si existen
     supabaseUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 
+    // Polyfill WebSocket si el runtime de Node no lo tiene nativo (Node < 22)
+    if (typeof (global as any).WebSocket === 'undefined') {
+      (global as any).WebSocket = class WebSocketDummy {
+        static readonly CONNECTING = 0;
+        static readonly OPEN = 1;
+        static readonly CLOSING = 2;
+        static readonly CLOSED = 3;
+        addEventListener() {}
+        removeEventListener() {}
+        send() {}
+        close() {}
+      };
+    }
+
     try {
       this.supabase = createClient(supabaseUrl, supabaseKey, {
         auth: {
           persistSession: false,
           autoRefreshToken: false,
+        },
+        realtime: {
+          transport: (global as any).WebSocket,
         },
       });
       this.isConfigured = true;
