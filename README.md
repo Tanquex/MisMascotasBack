@@ -1,98 +1,146 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🐾 VetRegistro API - Backend de Gestión Veterinaria y Mascotas
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+[![NestJS](https://img.shields.io/badge/NestJS-11.x-E0234E?style=flat&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-336791?style=flat&logo=postgresql&logoColor=white)](https://supabase.com/)
+[![TypeORM](https://img.shields.io/badge/TypeORM-0.3.x-FE0803?style=flat&logo=typeorm&logoColor=white)](https://typeorm.io/)
+[![Docker](https://img.shields.io/badge/Docker-Multi--Stage-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Render](https://img.shields.io/badge/Render-Deployed-46E3B7?style=flat&logo=render&logoColor=black)](https://render.com/)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+API RESTful empresarial de alto rendimiento para el registro de mascotas, expedientes médicos veterinarios, control de usuarios con roles (RBAC) y auditoría inmutable de acciones. Diseñada bajo una arquitectura modular y segura, lista para entornos de producción.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🛠️ Tecnologías Utilizadas
 
-## Project setup
+| Categoría | Tecnología | Descripción |
+| :--- | :--- | :--- |
+| **Framework Base** | **NestJS 11** | Arquitectura modular escalable basada en TypeScript y Node.js. |
+| **Lenguaje** | **TypeScript 5** | Tipado estático estricto para confiabilidad en tiempo de compilación. |
+| **Base de Datos** | **PostgreSQL (Supabase)** | Base de datos relacional robusta en la nube con cifrado SSL/TLS. |
+| **ORM** | **TypeORM** | Mapeo objeto-relacional con migraciones y sincronización automática. |
+| **Seguridad & Auth** | **Passport + JWT + Bcrypt** | Tokens de acceso y refresh tokens con hashing unidireccional de 12 rondas. |
+| **Protección Perimetral** | **Helmet + Throttler** | Headers HTTP de seguridad estricta y limitación de peticiones (Rate Limiting). |
+| **Validación de Datos** | **Class-Validator & Transformer** | Defensa activa contra inyección de parámetros y mass-assignment. |
+| **Documentación** | **Swagger OpenAPI 3** | Especificación interactiva de todos los endpoints. |
+| **Contenedores** | **Docker (Alpine Linux)** | Contenedor multi-etapa ultra ligero ejecutado en usuario no privilegiado (`node`). |
 
-```bash
-$ npm install
+---
+
+## 🚀 Capacidades y Funcionalidades
+
+### 1. Autenticación y Control de Acceso (RBAC)
+- **Roles del Sistema**:
+  - `ADMIN`: Control total del sistema, gestión de usuarios y consulta de auditoría.
+  - `VETERINARIAN`: Creación y actualización de expedientes médicos y consulta clínica de pacientes.
+  - `PET_OWNER`: Registro y consulta de sus propias mascotas y carnets de vacunación.
+- **Dual Token Flow**:
+  - `AccessToken` de corta duración (1 hora) firmado con HMAC-SHA256.
+  - `RefreshToken` de larga duración (7 días) almacenado de forma segura y revocable ante logout.
+- **Seed Automático**: Crea automáticamente al inicio el primer administrador (`admin@vetregistro.com`).
+
+### 2. Gestión Integral de Mascotas (`/api/v1/pets`)
+- Registro de mascotas vinculado a su propietario mediante identificadores UUID v4.
+- Atributos completos: Especie, raza, fecha de nacimiento, sexo, color, peso en kg, fotografía y notas.
+- **Control de Microchip Único**: Validación estricta a nivel de índice de base de datos para evitar duplicados.
+- Búsqueda, filtrado por especie y paginación optimizada.
+
+### 3. Expediente e Historial Médico (`/api/v1/medical-records`)
+- Registro cronológico de consultas, diagnósticos, tratamientos y recetas médicas.
+- Seguimiento de próximas citas y alertas de control veterinario.
+- Relación directa e íntegra con la mascota mediante borrado en cascada configurado.
+
+### 4. Registro de Auditoría Inmutable (`/api/v1/audit-logs`)
+- Bitácora forense de cada operación crítica (creación, edición, eliminación).
+- Captura automática de: `userId`, `action`, `resource`, `resourceId`, dirección IP y User-Agent del cliente.
+
+### 5. Blindaje de Seguridad en Producción
+- **CORS Dinámico**: Autoriza de forma segura cualquier despliegue en Vercel (`*.vercel.app`) y dominios configurados.
+- **Rate Limiting**: Protección contra ataques de fuerza bruta (máximo 5 intentos por minuto en login y registro).
+- **Protección de Datos**: Interceptor global que transforma respuestas al estándar `{ success, statusCode, data, timestamp }`.
+- **Filtro de Excepciones**: Oculta trazas de error internas en producción para evitar filtración de información sensible.
+
+---
+
+## 📁 Estructura del Proyecto
+
+```text
+back-registro-mascotas/
+├── src/
+│   ├── common/             # Interceptores, filtros de excepción, guards y decoradores globales
+│   ├── config/             # Configuración centralizada de variables de entorno y base de datos
+│   ├── modules/
+│   │   ├── audit-log/      # Módulo de trazabilidad y logs de auditoría
+│   │   ├── auth/           # Módulo de login, registro, JWT y refresh tokens
+│   │   ├── medical-records/# Módulo de expedientes médicos y visitas clínicas
+│   │   ├── pets/           # Módulo de mascotas y fichas veterinarias
+│   │   └── users/          # Módulo de usuarios, roles y seeder
+│   ├── app.module.ts       # Módulo raíz que ensambla TypeORM, Throttler y módulos de negocio
+│   └── main.ts             # Punto de entrada con Helmet, CORS, Swagger y Pipes globales
+├── Dockerfile              # Construcción multi-stage en Alpine Linux
+├── .dockerignore           # Exclusiones de archivos para la imagen Docker
+├── .env.example            # Plantilla de variables de entorno
+└── package.json            # Dependencias y scripts de ejecución
 ```
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## ⚙️ Variables de Entorno
 
-# watch mode
-$ npm run start:dev
+Crea un archivo `.env` en la raíz del backend tomando como referencia [.env.example](.env.example):
 
-# production mode
-$ npm run start:prod
+```env
+# Servidor
+PORT=3000
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:4200,https://front-registro-mascotas.vercel.app
+
+# Base de Datos (Supabase o PostgreSQL local)
+DATABASE_URL=postgresql://postgres.[PROYECTO]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+DB_SSL=true
+
+# Seguridad JWT
+JWT_SECRET=tu-clave-secreta-super-segura-2026
+JWT_EXPIRES_IN=1h
+JWT_REFRESH_SECRET=tu-clave-refresh-super-segura-2026
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Limitador de Tasa (DDoS Protection)
+THROTTLE_TTL=60
+THROTTLE_LIMIT=100
 ```
 
-## Run tests
+---
+
+## 💻 Ejecución Local
+
+### Prerrequisitos
+- Node.js 20+ instalado.
+- PostgreSQL local o cuenta en Supabase.
 
 ```bash
-# unit tests
-$ npm run test
+# 1. Instalar dependencias
+npm install
 
-# e2e tests
-$ npm run test:e2e
+# 2. Iniciar en modo desarrollo con recarga automática
+npm run start:dev
 
-# test coverage
-$ npm run test:cov
+# 3. Compilar para producción
+npm run build
+
+# 4. Iniciar bundle de producción
+npm run start:prod
 ```
 
-## Deployment
+Una vez iniciado, accede a la documentación interactiva en:
+📍 `http://localhost:3000/api/docs`
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+---
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## ☁️ Despliegue en Producción (Render + Docker)
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+La aplicación incluye un `Dockerfile` optimizado listo para Render:
+1. En **Render**, crea un nuevo **Web Service** conectado a tu repositorio de GitHub.
+2. Selecciona **Runtime: Docker**.
+3. Configura las variables de entorno (`DATABASE_URL`, `DB_SSL=true`, `JWT_SECRET`, etc.).
+4. Render compilará el contenedor automáticamente y expondrá la API mediante HTTPS.
