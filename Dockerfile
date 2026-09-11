@@ -32,8 +32,6 @@ COPY --from=builder /app/dist ./dist
 # Security: Run as non-root user
 USER node
 
-# Expose port (Render overrides with its own PORT variable)
-EXPOSE 3000
+# Launch application with memory safeguard for Render 512MB free tier
+CMD ["node", "--max-old-space-size=400", "dist/main.js"]
 
-# Launch application
-CMD ["node", "dist/main.js"]

@@ -2,12 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Enable trust proxy for Render / Cloudflare reverse proxies so IPs are resolved properly for Throttler
+  app.set('trust proxy', 1);
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port', 3000);
@@ -36,7 +40,7 @@ async function bootstrap() {
     }),
   );
 
-  // 2. Strict CORS
+  // 2. Resilient CORS (Prevents ERR_CONNECTION_RESET caused by thrown errors)
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (mobile apps, curl, server-to-server) or in dev mode
@@ -48,13 +52,17 @@ async function bootstrap() {
         allowedOrigins.includes('*') ||
         allowedOrigins.includes(origin) ||
         origin.endsWith('.vercel.app') ||
+        origin.endsWith('.render.com') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1') ||
         allowedOrigins.some((allowed) => origin.startsWith(allowed.trim().replace(/\/$/, '')));
 
       if (isAllowed) {
         callback(null, true);
       } else {
-        logger.warn(`Solicitud bloqueada por CORS desde origen: ${origin}`);
-        callback(new Error(`Bloqueado por política CORS: origen ${origin} no permitido`));
+        logger.warn(`Solicitud desde origen no listado: ${origin}`);
+        // Pass false instead of throwing Error to avoid dropping TCP socket abruptly
+        callback(null, false);
       }
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -62,8 +70,10 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
   });
 
-  // 3. Global API Route Prefix
-  app.setGlobalPrefix('api/v1');
+  // 3. Global API Route Prefix (Excludes root / and /health for Render uptime checks)
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['/', 'health'],
+  });
 
   // 4. Strict Validation Pipe (Defense against Mass Assignment & Parameter Pollution)
   app.useGlobalPipes(
