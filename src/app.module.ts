@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import configuration from './config/configuration';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 // Common Providers
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -98,7 +100,9 @@ import { GroupsModule } from './modules/groups/groups.module';
     StorageModule,
     GroupsModule,
   ],
+  controllers: [AppController],
   providers: [
+    AppService,
     // Global Exception Filter to prevent internal server error leakage
     {
       provide: APP_FILTER,
