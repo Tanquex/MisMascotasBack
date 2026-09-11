@@ -8,6 +8,15 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+
+  // Catch unhandled errors that could crash or hang the Node process silently
+  process.on('unhandledRejection', (reason: any) => {
+    logger.error(`💥 [UnhandledRejection] Motivo: ${reason?.message || reason}`, reason?.stack);
+  });
+  process.on('uncaughtException', (err: Error) => {
+    logger.error(`💥 [UncaughtException] Error: ${err.message}`, err.stack);
+  });
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Enable trust proxy for Render / Cloudflare reverse proxies so IPs are resolved properly for Throttler

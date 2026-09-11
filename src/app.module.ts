@@ -64,13 +64,21 @@ import { GroupsModule } from './modules/groups/groups.module';
           (dbConfig.url && dbConfig.url.includes('supabase'));
         const sslOptions = isSsl ? { rejectUnauthorized: false } : false;
 
+        const extraOptions = {
+          ssl: sslOptions,
+          connectionTimeoutMillis: 8000,
+          idleTimeoutMillis: 30000,
+          statement_timeout: 10000,
+          query_timeout: 10000,
+        };
+
         const baseOptions = {
           type: 'postgres' as const,
           entities: [User, Pet, MedicalRecord, AuditLog, PetMoment, PetGroup, GroupMember],
           synchronize: dbConfig.synchronize,
           logging: dbConfig.logging,
           ssl: sslOptions,
-          extra: isSsl ? { ssl: sslOptions } : undefined,
+          extra: extraOptions,
         };
 
         if (dbConfig.url) {

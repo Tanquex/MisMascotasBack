@@ -20,14 +20,25 @@ export class LoggingInterceptor implements NestInterceptor {
     const userAgent = request.get('user-agent') || 'unknown';
     const startTime = Date.now();
 
+    this.logger.log(`➡️ [REQ] ${method} ${originalUrl} - IP: ${ip} - UA: ${userAgent}`);
+
     return next.handle().pipe(
-      tap(() => {
-        const response = ctx.getResponse();
-        const { statusCode } = response;
-        const duration = Date.now() - startTime;
-        this.logger.log(
-          `${method} ${originalUrl} ${statusCode} - ${duration}ms - IP: ${ip} - UA: ${userAgent}`,
-        );
+      tap({
+        next: () => {
+          const response = ctx.getResponse();
+          const { statusCode } = response;
+          const duration = Date.now() - startTime;
+          this.logger.log(
+            `⬅️ [RES] ${method} ${originalUrl} ${statusCode} - ${duration}ms`,
+          );
+        },
+        error: (err) => {
+          const duration = Date.now() - startTime;
+          this.logger.error(
+            `❌ [ERR] ${method} ${originalUrl} - ${duration}ms - Error: ${err.message}`,
+            err.stack,
+          );
+        },
       }),
     );
   }
